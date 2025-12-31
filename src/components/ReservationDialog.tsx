@@ -3,7 +3,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { format, addDays } from "date-fns";
-import { Calendar as CalendarIcon, Clock, Users, Check, ChevronRight, ChevronLeft, PartyPopper, Utensils, Sparkles, MapPin, Phone, User } from "lucide-react";
+import { Calendar as CalendarIcon, Clock, Users, Check, ChevronRight, ChevronLeft, PartyPopper, Utensils, Sparkles, MapPin, Phone, User, CalendarDays, ChefHat } from "lucide-react";
 
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -25,7 +25,7 @@ const reservationSchema = z.object({
   occasion: z.string().optional(),
   table: z.string({ required_error: "Please select a table" }),
   name: z.string().min(2, "Name must be at least 2 characters"),
-  phone: z.string().min(10, "Please enter a valid phone number"),
+  phone: z.string().regex(/^\d{10}$/, "Phone number must be exactly 10 digits"),
 });
 
 type ReservationForm = z.infer<typeof reservationSchema>;
@@ -125,9 +125,24 @@ export const ReservationDialog = ({ trigger }: ReservationDialogProps) => {
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="max-w-2xl p-0 gap-0 bg-zinc-950 border-zinc-800 text-zinc-100 overflow-hidden sm:rounded-3xl">
-        <div className="flex h-[600px]">
-          {/* Left Sidebar - Summary & Progress */}
+      {/* Optimized Content Container: h-[100dvh] on mobile for full screen */}
+      <DialogContent className="max-w-2xl p-0 gap-0 bg-zinc-950 border-zinc-800 text-zinc-100 overflow-hidden sm:rounded-3xl h-[100dvh] sm:h-auto sm:max-h-[95vh] flex flex-col">
+        <div className="flex md:h-[600px] h-full flex-col md:flex-row">
+
+          {/* Mobile Progress Bar & Header (Visible only on small screens) */}
+          <div className="md:hidden flex items-center justify-between p-4 border-b border-white/5 bg-zinc-900/80 backdrop-blur-sm z-20">
+            <div className="flex items-center gap-2">
+              <ChefHat className="w-5 h-5 text-primary" />
+              <span className="font-serif font-bold text-sm">Step {step}/4</span>
+            </div>
+            <div className="flex gap-1">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className={cn("h-1.5 w-6 rounded-full transition-all duration-300", i <= step ? "bg-primary" : "bg-zinc-800")} />
+              ))}
+            </div>
+          </div>
+
+          {/* Left Sidebar - Summary & Progress (Desktop Only) */}
           <div className="hidden md:flex w-1/3 bg-zinc-900/50 border-r border-white/5 flex-col p-6 relative overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-b from-primary/5 to-transparent pointer-events-none" />
 
@@ -207,7 +222,7 @@ export const ReservationDialog = ({ trigger }: ReservationDialogProps) => {
           </div>
 
           {/* Right Content Area */}
-          <div className="flex-1 flex flex-col bg-zinc-950 relative">
+          <div className="flex-1 flex flex-col bg-zinc-950 relative md:rounded-r-3xl h-full overflow-hidden">
             <div className="flex-1 p-6 md:p-8 overflow-y-auto">
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="h-full flex flex-col">
@@ -215,9 +230,9 @@ export const ReservationDialog = ({ trigger }: ReservationDialogProps) => {
                   {/* Step 1: Date & Time */}
                   {step === 1 && (
                     <div className="space-y-6 animate-in fade-in slide-in-from-right-8 duration-500">
-                      <div className="mb-6">
-                        <h2 className="text-2xl font-serif font-bold text-white mb-2">When would you like to dine?</h2>
-                        <p className="text-zinc-400">Select a date and time for your visit.</p>
+                      <div className="mb-4 md:mb-6">
+                        <h2 className="text-xl md:text-2xl font-serif font-bold text-white mb-2">When would you like to dine?</h2>
+                        <p className="text-sm md:text-base text-zinc-400">Select a date and time for your visit.</p>
                       </div>
 
                       <FormField
@@ -276,7 +291,7 @@ export const ReservationDialog = ({ trigger }: ReservationDialogProps) => {
                                   type="button"
                                   variant={field.value === time ? "default" : "outline"}
                                   className={cn(
-                                    "h-10 border-zinc-800 hover:bg-zinc-800 hover:text-white transition-all",
+                                    "h-10 border-zinc-800 hover:bg-zinc-800 hover:text-white transition-all text-xs sm:text-sm",
                                     field.value === time && "bg-primary text-primary-foreground hover:bg-primary/90 border-primary"
                                   )}
                                   onClick={() => field.onChange(time)}
@@ -294,10 +309,10 @@ export const ReservationDialog = ({ trigger }: ReservationDialogProps) => {
 
                   {/* Step 2: Guests & Occasion */}
                   {step === 2 && (
-                    <div className="space-y-8 animate-in fade-in slide-in-from-right-8 duration-500">
-                      <div className="mb-6">
-                        <h2 className="text-2xl font-serif font-bold text-white mb-2">Who's joining us?</h2>
-                        <p className="text-zinc-400">Tell us about your party and the occasion.</p>
+                    <div className="space-y-6 md:space-y-8 animate-in fade-in slide-in-from-right-8 duration-500">
+                      <div className="mb-4 md:mb-6">
+                        <h2 className="text-xl md:text-2xl font-serif font-bold text-white mb-2">Who's joining us?</h2>
+                        <p className="text-sm md:text-base text-zinc-400">Tell us about your party and the occasion.</p>
                       </div>
 
                       <FormField
@@ -343,7 +358,7 @@ export const ReservationDialog = ({ trigger }: ReservationDialogProps) => {
                                   key={occ.id}
                                   onClick={() => field.onChange(occ.id)}
                                   className={cn(
-                                    "cursor-pointer p-4 rounded-xl border transition-all duration-200 flex items-center gap-3 hover:bg-zinc-900",
+                                    "cursor-pointer p-3 md:p-4 rounded-xl border transition-all duration-200 flex items-center gap-3 hover:bg-zinc-900",
                                     field.value === occ.id
                                       ? "bg-primary/10 border-primary ring-1 ring-primary/50"
                                       : "bg-zinc-900/30 border-zinc-800 hover:border-zinc-700"
@@ -365,9 +380,9 @@ export const ReservationDialog = ({ trigger }: ReservationDialogProps) => {
                   {/* Step 3: Table Selection */}
                   {step === 3 && (
                     <div className="space-y-6 animate-in fade-in slide-in-from-right-8 duration-500 h-full flex flex-col">
-                      <div className="shrink-0">
-                        <h2 className="text-2xl font-serif font-bold text-white mb-2">Choose your spot</h2>
-                        <p className="text-zinc-400">Select an available table for your party.</p>
+                      <div className="shrink-0 mb-2">
+                        <h2 className="text-xl md:text-2xl font-serif font-bold text-white mb-2">Choose your spot</h2>
+                        <p className="text-sm md:text-base text-zinc-400">Select an available table for your party.</p>
                       </div>
 
                       <FormField
@@ -375,41 +390,50 @@ export const ReservationDialog = ({ trigger }: ReservationDialogProps) => {
                         name="table"
                         render={({ field }) => (
                           <FormItem className="flex-1 min-h-0">
-                            <ScrollArea className="h-[340px] pr-4">
-                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <ScrollArea className="h-[300px] md:h-[340px] pr-2 md:pr-4">
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4 pb-4">
                                 {tables.map((table) => {
-                                  const isSuitable = table.capacity >= watchedGuests;
+                                  // Simplified logic: any table can seat 1 person, but we should match capacity if possible
+                                  // For realism, table capacity should be >= guests
+                                  const isCapacitySuitable = table.capacity >= watchedGuests;
+
+                                  // Allow selecting larger tables, but maybe not massive ones for 2 people? 
+                                  // For now, let's keep it simple: can fit? yes.
+                                  const isSuitable = isCapacitySuitable;
                                   const isSelected = field.value === table.id;
+                                  const isAvailable = table.status === "available";
 
                                   return (
                                     <div
                                       key={table.id}
-                                      onClick={() => isSuitable && table.status === "available" && field.onChange(table.id)}
+                                      onClick={() => isSuitable && isAvailable && field.onChange(table.id)}
                                       className={cn(
-                                        "relative p-4 rounded-xl border transition-all duration-300 flex flex-col gap-3 group",
+                                        "relative p-3 md:p-4 rounded-xl border transition-all duration-300 flex flex-col gap-2 md:gap-3 group",
                                         isSelected
                                           ? "bg-primary/10 border-primary ring-1 ring-primary shadow-[0_0_20px_rgba(234,179,8,0.1)]"
                                           : "bg-zinc-900 border-zinc-800",
-                                        !isSuitable || table.status !== "available"
-                                          ? "opacity-50 cursor-not-allowed grayscale"
+                                        !isSuitable || !isAvailable
+                                          ? "opacity-50 cursor-not-allowed grayscale bg-zinc-950/50"
                                           : "cursor-pointer hover:border-primary/50 hover:bg-zinc-800 hover:-translate-y-1"
                                       )}
                                     >
                                       <div className="flex justify-between items-start">
-                                        <div className="p-2 bg-zinc-950 rounded-lg border border-white/5">
-                                          {table.capacity <= 2 ? <Users className="h-4 w-4 text-zinc-400" /> : <Users className="h-4 w-4 text-zinc-400" />}
+                                        <div className="p-1.5 md:p-2 bg-zinc-950 rounded-lg border border-white/5">
+                                          <Users className="h-4 w-4 text-zinc-400" />
                                         </div>
                                         {table.status === "reserved" ? (
-                                          <Badge variant="secondary" className="bg-zinc-800 text-zinc-500">Reserved</Badge>
+                                          <Badge variant="secondary" className="bg-zinc-800 text-zinc-500 text-[10px] md:text-xs">Reserved</Badge>
                                         ) : isSelected ? (
-                                          <Badge className="bg-primary text-black hover:bg-primary">Selected</Badge>
+                                          <Badge className="bg-primary text-black hover:bg-primary text-[10px] md:text-xs">Selected</Badge>
+                                        ) : !isSuitable ? (
+                                          <Badge variant="outline" className="border-red-900/50 text-red-700 text-[10px] md:text-xs">Small</Badge>
                                         ) : (
-                                          <Badge variant="outline" className="border-zinc-700 text-zinc-400">Available</Badge>
+                                          <Badge variant="outline" className="border-zinc-700 text-zinc-400 text-[10px] md:text-xs">Available</Badge>
                                         )}
                                       </div>
 
                                       <div>
-                                        <h4 className={cn("font-bold text-lg", isSelected ? "text-primary" : "text-white")}>{table.name}</h4>
+                                        <h4 className={cn("font-bold text-base md:text-lg", isSelected ? "text-primary" : "text-white")}>{table.name}</h4>
                                         <p className="text-xs text-zinc-400 capitalize">{table.type} • Seats {table.capacity}</p>
                                       </div>
 
@@ -431,9 +455,9 @@ export const ReservationDialog = ({ trigger }: ReservationDialogProps) => {
                   {/* Step 4: Contact Details */}
                   {step === 4 && (
                     <div className="space-y-6 animate-in fade-in slide-in-from-right-8 duration-500">
-                      <div className="mb-6">
-                        <h2 className="text-2xl font-serif font-bold text-white mb-2">Final Details</h2>
-                        <p className="text-zinc-400">Enter your contact information to confirm.</p>
+                      <div className="mb-4 md:mb-6">
+                        <h2 className="text-xl md:text-2xl font-serif font-bold text-white mb-2">Final Details</h2>
+                        <p className="text-sm md:text-base text-zinc-400">Enter your contact information to confirm.</p>
                       </div>
 
                       <div className="space-y-4">
@@ -449,7 +473,7 @@ export const ReservationDialog = ({ trigger }: ReservationDialogProps) => {
                                   <Input
                                     placeholder="John Doe"
                                     {...field}
-                                    className="pl-10 bg-zinc-900 border-zinc-800 text-white placeholder:text-zinc-600 focus:border-primary"
+                                    className="pl-10 h-12 bg-zinc-900 border-zinc-800 text-white placeholder:text-zinc-600 focus:border-primary focus:ring-1 focus:ring-primary"
                                   />
                                 </div>
                               </FormControl>
@@ -468,13 +492,21 @@ export const ReservationDialog = ({ trigger }: ReservationDialogProps) => {
                                 <div className="relative">
                                   <Phone className="absolute left-3 top-3 h-4 w-4 text-zinc-500" />
                                   <Input
-                                    placeholder="+1 (555) 000-0000"
+                                    placeholder="1234567890"
                                     {...field}
-                                    className="pl-10 bg-zinc-900 border-zinc-800 text-white placeholder:text-zinc-600 focus:border-primary"
+                                    onChange={(e) => {
+                                      const value = e.target.value.replace(/\D/g, '').slice(0, 10);
+                                      field.onChange(value);
+                                    }}
+                                    type="tel"
+                                    className="pl-10 h-12 bg-zinc-900 border-zinc-800 text-white placeholder:text-zinc-600 focus:border-primary focus:ring-1 focus:ring-primary"
                                   />
                                 </div>
                               </FormControl>
-                              <FormMessage />
+                              <FormMessage>
+                                {form.formState.errors.phone?.message}
+                              </FormMessage>
+                              <p className="text-xs text-zinc-500 pt-1">Enter exactly 10 digits.</p>
                             </FormItem>
                           )}
                         />
@@ -492,7 +524,7 @@ export const ReservationDialog = ({ trigger }: ReservationDialogProps) => {
                   )}
 
                   {/* Navigation Buttons */}
-                  <div className="mt-auto pt-6 flex items-center justify-between border-t border-white/5">
+                  <div className="mt-auto pt-4 md:pt-6 flex items-center justify-between border-t border-white/5 bg-zinc-950 z-10">
                     {step > 1 ? (
                       <Button type="button" variant="ghost" onClick={prevStep} className="text-zinc-400 hover:text-white hover:bg-white/5">
                         <ChevronLeft className="mr-2 h-4 w-4" /> Back
@@ -502,12 +534,12 @@ export const ReservationDialog = ({ trigger }: ReservationDialogProps) => {
                     )}
 
                     {step < 4 ? (
-                      <Button type="button" onClick={nextStep} className="gradient-primary px-8">
+                      <Button type="button" onClick={nextStep} className="gradient-primary px-6 md:px-8">
                         Next Step <ChevronRight className="ml-2 h-4 w-4" />
                       </Button>
                     ) : (
-                      <Button type="submit" className="gradient-primary px-8 shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all">
-                        Confirm Booking <PartyPopper className="ml-2 h-4 w-4" />
+                      <Button type="submit" className="gradient-primary px-6 md:px-8 shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all">
+                        Confirm <span className="hidden sm:inline ml-1">Booking</span> <PartyPopper className="ml-2 h-4 w-4" />
                       </Button>
                     )}
                   </div>
